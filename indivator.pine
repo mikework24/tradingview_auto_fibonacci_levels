@@ -1,0 +1,351 @@
+//@version=4
+
+study(title="[MF] Auto Fibonacci Levels", shorttitle="[MF] AutoFibLev", overlay=true)
+
+//negative filter to hide errors
+hide_neg(number) => number<=0?0:number
+
+
+/////////////////////////////
+//          input          //
+/////////////////////////////
+fib_timeframe = input(title="Timeframe",defval="M", options=["D", "W", "M"], group="Settings")
+
+sExt      = input(true, title="Show Extended Fibonacci Levels", type = input.bool, group="Settings")
+uClassic  = input(false, title="Show Classic Levels instead of Fibonacci", type = input.bool, group="Settings")
+sLabels   = input(true, title="Show Current Labels", type = input.bool, group="Settings")
+sOpen     = input(false, title="Show Current Day's Open Level", type = input.bool, group="Settings")
+
+color color0 = input(title="Pivot", defval=color.yellow, type=input.color, group="Colors", inline="a")
+color color1 = input(title="Open", defval=color.blue, type=input.color, group="Colors", inline="a")
+
+color colorR = input(title="Fib [0 - 1]", defval=#F44336, type=input.color, group="Colors", inline="Fib")
+color color2 = input(title="", defval=color.lime, type=input.color, group="Colors", inline="Fib")
+color color3 = input(title="", defval=#009688, type=input.color, group="Colors", inline="Fib")
+color color4 = input(title="", defval=#64B5F6, type=input.color, group="Colors", inline="Fib")
+color color5 = input(title="", defval=color.gray, type=input.color, group="Colors", inline="Fib")
+color color6 = input(title="Fib Extended [1 - 2]", defval=#81C784, type=input.color, group="Colors", inline="Fib2")
+color color7 = input(title="", defval=#F44336, type=input.color, group="Colors", inline="Fib2")
+color color8 = input(title="", defval=#2962FF, type=input.color, group="Colors", inline="Fib2")
+color color9 = input(title="", defval=#009688, type=input.color, group="Colors", inline="Fib2")
+
+
+//////////////////////////////////////////////
+//      Start Fib levels from Pivot source  //
+//////////////////////////////////////////////
+Z_000 = security(syminfo.tickerid, fib_timeframe, hlc3[1],barmerge.gaps_off, barmerge.lookahead_on)
+H_100 = security(syminfo.tickerid, fib_timeframe, high[1],barmerge.gaps_off, barmerge.lookahead_on)
+L_100 = security(syminfo.tickerid, fib_timeframe, low[1],barmerge.gaps_off, barmerge.lookahead_on)
+
+dOpen = sOpen? security(syminfo.tickerid, fib_timeframe, open, barmerge.gaps_off, barmerge.lookahead_on) : na
+
+// Test for new Daily Session or start of new month for Daily.
+start = security(syminfo.tickerid,fib_timeframe, time, barmerge.gaps_off, barmerge.lookahead_on)
+newDay = change(start)
+
+
+// Get Full range from previous Daily High and Low
+RANGE = H_100-L_100
+
+// Calculate 0.236 levels
+H_236 = uClassic? na : Z_000 + RANGE * 0.236
+L_236 = uClassic? na : Z_000 - RANGE * 0.236
+
+// Calculate R1/S1 levels
+H_382 = uClassic? (Z_000 * 2.0) - L_100 : Z_000 + RANGE * 0.382 // R1
+L_382 = uClassic? (Z_000 * 2.0) - H_100 : Z_000 - RANGE * 0.382 // S1
+
+// Calculate R2/S2 Levels
+H_618 = uClassic? Z_000 + RANGE : Z_000 + RANGE * 0.618 // R2
+L_618 = uClassic? Z_000 - RANGE : Z_000 - RANGE * 0.618 // S2
+
+// Calculate R3/S3 Levels
+H_786 = uClassic? H_100 + (2.0 * (Z_000 - L_100)) : Z_000 + RANGE * 0.786 // R3
+L_786 = uClassic? L_100 - (2.0 * (H_100 - Z_000)) : Z_000 - RANGE * 0.786 // S3
+
+// Calculate R4/S4 Levels
+H1000 = uClassic? H_100 + (3.0 * (Z_000 - L_100)) : Z_000 + RANGE //R4
+L1000 = uClassic? L_100 - (3.0 * (H_100 - Z_000)) : Z_000 - RANGE //S4
+
+// Calculate R5/S5 Levels
+H1236 = uClassic? na : Z_000 + RANGE * 1.236  //R5
+L1236 = uClassic? na : Z_000 - RANGE * 1.236  //S5
+
+// Calculate R6/S6 Levels
+H1382 = uClassic? na : Z_000 + RANGE * 1.382  //R6
+L1382 = uClassic? na : Z_000 - RANGE * 1.382  //S6
+
+// Calculate R7/S7 Levels
+H1618 = uClassic? na : Z_000 + RANGE * 1.618 //R7
+L1618 = uClassic? na : Z_000 - RANGE * 1.618 //S7
+
+// Calculate R8/S8 Levels
+H2000 = uClassic? na : Z_000 + RANGE * 2.000 //R8
+L2000 = uClassic? na : Z_000 - RANGE * 2.000 //S8
+
+
+//////////////////////////////////////
+//          drow the Pivot          //
+//////////////////////////////////////
+plot( sExt ?hide_neg(H2000):na, title="R8+2000", color=newDay?na:color9, linewidth=2)
+plot( sExt ?hide_neg(H1618):na, title="R7+1618", color=newDay?na:color8, linewidth=1)
+plot( sExt ?hide_neg(H1382):na, title="R6+1382", color=newDay?na:color7, linewidth=1)
+plot( sExt ?hide_neg(H1236):na, title="R5+1236", color=newDay?na:color6, linewidth=1)
+
+plot( hide_neg(H1000), title="R4+1000", color=newDay?na:color5, linewidth=3)
+plot( hide_neg(H_786), title="R3+0786", color=newDay?na:color4, linewidth=2)
+plot( hide_neg(H_618), title="R2+0618", color=newDay?na:color3, linewidth=2)
+plot( hide_neg(H_382), title="R1+0382", color=newDay?na:color2, linewidth=2)
+
+h0236=plot( hide_neg(H_236), title="R1+0236", color=newDay?na:colorR, linewidth=2)
+zero =plot( hide_neg(Z_000), title="Pivot 0", color=newDay?na:color0, linewidth=3)
+l0236=plot( hide_neg(L_236), title="S1-0236", color=newDay?na:colorR, linewidth=2)
+
+plot( hide_neg(L_382), title="S1-0382", color=newDay?na:color2, linewidth=2)
+plot( hide_neg(L_618), title="S2-0618", color=newDay?na:color3, linewidth=2)
+plot( hide_neg(L_786), title="S3-0786", color=newDay?na:color4, linewidth=2)
+plot( hide_neg(L1000), title="S4-1000", color=newDay?na:color5, linewidth=3)
+
+plot( sExt ?hide_neg(L1236):na, title="S5-1236", color=newDay?na:color6, linewidth=1)
+plot( sExt ?hide_neg(L1382):na, title="S6-1382", color=newDay?na:color7, linewidth=1)
+plot( sExt ?hide_neg(L1618):na, title="S7-1618", color=newDay?na:color8, linewidth=1)
+plot( sExt ?hide_neg(L2000):na, title="S8-2000", color=newDay?na:color9, linewidth=2)
+
+plot( sOpen ?hide_neg(dOpen):na, title="D OPEN", color=newDay?na:color1, linewidth=1)
+
+fill(l0236,h0236, color=color.new(color.blue,newDay?100:92), title="Pivot Zone")
+
+
+////////////////////////////////////////////
+//      complete current drow cycle       //
+////////////////////////////////////////////
+time_y = year(time)
+time_m = month(time)
+time_d = dayofmonth(time)
+
+
+if(time_m == 12)
+    time_y := time_y + 1
+    time_m := 1
+else
+    time_m := time_m + 1
+next_month = timestamp(time_y, time_m, 1, 0, 0)
+
+var tom_start = 0
+var tom_end = 0
+
+if(fib_timeframe == "M")
+    tom_start := next_month
+    tom_end := tom_start + (60000 * 60 * 24 * 30)
+
+if(fib_timeframe == "W")
+    if(time(timeframe.period, "0000-1200:2") and not time(timeframe.period, "0000-1200:2")[1])
+        tom_start := time + (1000 * 60 * 60 * 24 * 7)
+        tom_end := tom_start + (1000 * 60 * 60 * 24 * 7)
+
+if(fib_timeframe == "D")
+    if(time(timeframe.period, "0000-1200:1234567") and not time(timeframe.period, "0000-1200:1234567")[1])
+        tom_start := time + (1000 * 60 * 60 * 24)
+        tom_end := tom_start + (1000 * 60 * 60 * 24)
+
+
+l00o = line.new(time, hide_neg(dOpen), tom_start, hide_neg(dOpen), xloc.bar_time, color=color1, width=1)
+line.delete(sOpen?l00o[1]:l00o)
+
+//if(not uClassic)
+lu8 = line.new(time, hide_neg(H2000), tom_start, hide_neg(H2000), xloc.bar_time, color=color9, width=2)
+line.delete(sExt?lu8[1]:lu8)
+lu7 = line.new(time, hide_neg(H1618), tom_start, hide_neg(H1618), xloc.bar_time, color=color8, width=1)
+line.delete(sExt?lu7[1]:lu7)
+lu6 = line.new(time, hide_neg(H1382), tom_start, hide_neg(H1382), xloc.bar_time, color=color7, width=1)
+line.delete(sExt?lu6[1]:lu6)
+lu5 = line.new(time, hide_neg(H1236), tom_start, hide_neg(H1236), xloc.bar_time, color=color6, width=1)
+line.delete(sExt?lu5[1]:lu5)
+
+lu4 = line.new(time, hide_neg(H1000), tom_start, hide_neg(H1000), xloc.bar_time, color=color5, width=3)
+line.delete(lu4[1])
+lu3 = line.new(time, hide_neg(H_786), tom_start, hide_neg(H_786), xloc.bar_time, color=color4, width=2)
+line.delete(lu3[1])
+lu2 = line.new(time, hide_neg(H_618), tom_start, hide_neg(H_618), xloc.bar_time, color=color3, width=2)
+line.delete(lu2[1])
+lu1 = line.new(time, hide_neg(H_382), tom_start, hide_neg(H_382), xloc.bar_time, color=color2, width=2)
+line.delete(lu1[1])
+
+lu1R = line.new(time, hide_neg(H_236), tom_start, hide_neg(H_236), xloc.bar_time, color=colorR, width=2)
+line.delete(lu1R[1])
+l00  = line.new(time, hide_neg(Z_000), tom_start, hide_neg(Z_000), xloc.bar_time, color=color0, width=3)
+line.delete(l00[1])
+ld1R = line.new(time, hide_neg(L_236), tom_start, hide_neg(L_236), xloc.bar_time, color=colorR, width=2)
+line.delete(ld1R[1])
+
+ld1 = line.new(time, hide_neg(L_382), tom_start, hide_neg(L_382), xloc.bar_time, color=color2, width=2)
+line.delete(ld1[1])
+ld2 = line.new(time, hide_neg(L_618), tom_start, hide_neg(L_618), xloc.bar_time, color=color3, width=2)
+line.delete(ld2[1])
+ld3 = line.new(time, hide_neg(L_786), tom_start, hide_neg(L_786), xloc.bar_time, color=color4, width=2)
+line.delete(ld3[1])
+ld4 = line.new(time, hide_neg(L1000), tom_start, hide_neg(L1000), xloc.bar_time, color=color5, width=3)
+line.delete(ld4[1])
+
+ld5 = line.new(time, hide_neg(L1236), tom_start, hide_neg(L1236), xloc.bar_time, color=color6, width=1)
+line.delete(sExt?ld5[1]:ld5)
+ld6 = line.new(time, hide_neg(L1382), tom_start, hide_neg(L1382), xloc.bar_time, color=color7, width=1)
+line.delete(sExt?ld6[1]:ld6)
+ld7 = line.new(time, hide_neg(L1618), tom_start, hide_neg(L1618), xloc.bar_time, color=color8, width=1)
+line.delete(sExt?ld7[1]:ld7)
+ld8 = line.new(time, hide_neg(L2000), tom_start, hide_neg(L2000), xloc.bar_time, color=color9, width=2)
+line.delete(sExt?ld8[1]:ld8)
+
+blue_box = box.new(time, hide_neg(H_236), tom_start, hide_neg(L_236), xloc=xloc.bar_time, border_width=0, bgcolor=color.new(color.blue,92))
+box.delete(blue_box[1])
+
+
+//Label func()
+fib_label(x_, y_, text_, textcolor_) =>
+    if(str.length(tostring(round(y_))) >= 2)
+        factor = pow(10, 2)
+        numberR = int(y_ * factor) / factor
+        label.new(x_, y_, text=text_+" ("+tostring(numberR)+")", xloc=xloc.bar_time, textcolor=textcolor_, color=color.new(color.black,100), style=label.style_label_lower_right)
+    else
+        label.new(x_, y_, text=text_+" ("+tostring(y_)+")", xloc=xloc.bar_time, textcolor=textcolor_, color=color.new(color.black,100), style=label.style_label_lower_right)
+
+if(sLabels)
+    lu8l = fib_label(tom_start, hide_neg(H2000), "2.0" , color9)
+    label.delete(sExt?lu8l[1]:lu8l)
+    lu7l = fib_label(tom_start, hide_neg(H1618), "1.618", color8)
+    label.delete(sExt?lu7l[1]:lu7l)
+    lu6l = fib_label(tom_start, hide_neg(H1382), "1.382", color7)
+    label.delete(sExt?lu6l[1]:lu6l)
+    lu5l = fib_label(tom_start, hide_neg(H1236), "1.236", color6)
+    label.delete(sExt?lu5l[1]:lu5l)
+
+    lu4l = fib_label(tom_start, hide_neg(H1000), uClassic?"R4":"1.0"  , color5)
+    label.delete(lu4l[1])
+    lu3l = fib_label(tom_start, hide_neg(H_786), uClassic?"R3":"0.786", color4)
+    label.delete(lu3l[1])
+    lu2l = fib_label(tom_start, hide_neg(H_618), uClassic?"R2":"0.618", color3)
+    label.delete(lu2l[1])
+    lu1l = fib_label(tom_start, hide_neg(H_382), uClassic?"R1":"0.382", color2)
+    label.delete(lu1l[1])
+    
+    lu1Rl = fib_label(tom_start, hide_neg(H_236), "0.236", colorR)
+    label.delete(lu1Rl[1])
+    l00l  = fib_label(tom_start, hide_neg(Z_000), uClassic?"P":"0.0"  , color0)
+    label.delete(l00l[1])
+    ld1Rl = fib_label(tom_start, hide_neg(L_236), "-0.236", colorR)
+    label.delete(ld1Rl[1])
+    
+    ld1l = fib_label(tom_start, hide_neg(L_382), uClassic?"S1":"-0.382", color2)
+    label.delete(ld1l[1])
+    ld2l = fib_label(tom_start, hide_neg(L_618), uClassic?"S2":"-0.618", color3)
+    label.delete(ld2l[1])
+    ld3l = fib_label(tom_start, hide_neg(L_786), uClassic?"S3":"-0.786", color4)
+    label.delete(ld3l[1])
+    ld4l = fib_label(tom_start, hide_neg(L1000), uClassic?"S4":"-1.0"  , color5)
+    label.delete(ld4l[1])
+    
+    ld5l = fib_label(tom_start, hide_neg(L1236), "-1.382", color6)
+    label.delete(sExt?ld5l[1]:ld5l)
+    ld6l = fib_label(tom_start, hide_neg(L1382), "-1.618", color7)
+    label.delete(sExt?ld6l[1]:ld6l)
+    ld7l = fib_label(tom_start, hide_neg(L1618), "-1.786", color8)
+    label.delete(sExt?ld7l[1]:ld7l)
+    ld8l = fib_label(tom_start, hide_neg(L2000), "-2.0"  , color9)
+    label.delete(sExt?ld8l[1]:ld8l)
+
+
+
+////////////////////////////////////
+//          future drows          //
+////////////////////////////////////
+tZ_000 = security(syminfo.tickerid, fib_timeframe, hlc3,barmerge.gaps_off, barmerge.lookahead_on)
+tH_100 = security(syminfo.tickerid, fib_timeframe, high,barmerge.gaps_off, barmerge.lookahead_on)
+tL_100 = security(syminfo.tickerid, fib_timeframe, low,barmerge.gaps_off, barmerge.lookahead_on)
+
+
+// Get Full range from previous Daily High and Low
+tRANGE = tH_100-tL_100
+
+// Calculate 0.236 levels
+tH_236 = uClassic? na : tZ_000 + tRANGE * 0.236
+tL_236 = uClassic? na : tZ_000 - tRANGE * 0.236
+
+// Calculate R1/S1 levels
+tH_382 = uClassic? (tZ_000 * 2.0) - tL_100 : tZ_000 + tRANGE * 0.382 // R1
+tL_382 = uClassic? (tZ_000 * 2.0) - tH_100 : tZ_000 - tRANGE * 0.382 // S1
+
+// Calculate R2/S2 Levels
+tH_618 = uClassic? tZ_000 + tRANGE : tZ_000 + tRANGE * 0.618 // R2
+tL_618 = uClassic? tZ_000 - tRANGE : tZ_000 - tRANGE * 0.618 // S2
+
+// Calculate R3/S3 Levels
+tH_786 = uClassic? tH_100 + (2.0 * (tZ_000 - tL_100)) : tZ_000 + tRANGE * 0.786 // R3
+tL_786 = uClassic? tL_100 - (2.0 * (tH_100 - tZ_000)) : tZ_000 - tRANGE * 0.786 // S3
+
+// Calculate R4/S4 Levels
+tH1000 = uClassic? tH_100 + (3.0 * (tZ_000 - tL_100)) : tZ_000 + tRANGE //R4
+tL1000 = uClassic? tL_100 - (3.0 * (tH_100 - tZ_000)) : tZ_000 - tRANGE //S4
+
+// Calculate R5/S5 Levels
+tH1236 = uClassic? na : tZ_000 + tRANGE * 1.236  //R5
+tL1236 = uClassic? na : tZ_000 - tRANGE * 1.236  //S5
+
+// Calculate R6/S6 Levels
+tH1382 = uClassic? na : tZ_000 + tRANGE * 1.382  //R6
+tL1382 = uClassic? na : tZ_000 - tRANGE * 1.382  //S6
+
+// Calculate R7/S7 Levels
+tH1618 = uClassic? na : tZ_000 + tRANGE * 1.618 //R7
+tL1618 = uClassic? na : tZ_000 - tRANGE * 1.618 //S7
+
+// Calculate R8/S8 Levels
+tH2000 = uClassic? na : tZ_000 + tRANGE * 2.000 //R8
+tL2000 = uClassic? na : tZ_000 - tRANGE * 2.000 //S8
+
+
+tlu8 = line.new(tom_start, hide_neg(tH2000), tom_end, hide_neg(tH2000), xloc.bar_time, color=color9, width=2)
+line.delete(sExt?tlu8[1]:tlu8)
+tlu7 = line.new(tom_start, hide_neg(tH1618), tom_end, hide_neg(tH1618), xloc.bar_time, color=color8, width=1)
+line.delete(sExt?tlu7[1]:tlu7)
+tlu6 = line.new(tom_start, hide_neg(tH1382), tom_end, hide_neg(tH1382), xloc.bar_time, color=color7, width=1)
+line.delete(sExt?tlu6[1]:tlu6)
+tlu5 = line.new(tom_start, hide_neg(tH1236), tom_end, hide_neg(tH1236), xloc.bar_time, color=color6, width=1)
+line.delete(sExt?tlu5[1]:tlu5)
+
+tlu4 = line.new(tom_start, hide_neg(tH1000), tom_end, hide_neg(tH1000), xloc.bar_time, color=color5, width=3)
+line.delete(tlu4[1])
+tlu3 = line.new(tom_start, hide_neg(tH_786), tom_end, hide_neg(tH_786), xloc.bar_time, color=color4, width=2)
+line.delete(tlu3[1])
+tlu2 = line.new(tom_start, hide_neg(tH_618), tom_end, hide_neg(tH_618), xloc.bar_time, color=color3, width=2)
+line.delete(tlu2[1])
+tlu1 = line.new(tom_start, hide_neg(tH_382), tom_end, hide_neg(tH_382), xloc.bar_time, color=color2, width=2)
+line.delete(tlu1[1])
+
+tlu1R = line.new(tom_start, hide_neg(tH_236), tom_end, hide_neg(tH_236), xloc.bar_time, color=colorR, width=2)
+line.delete(tlu1R[1])
+tl00  = line.new(tom_start, hide_neg(tZ_000), tom_end, hide_neg(tZ_000), xloc.bar_time, color=color0, width=3)
+line.delete(tl00[1])
+tld1R = line.new(tom_start, hide_neg(tL_236), tom_end, hide_neg(tL_236), xloc.bar_time, color=colorR, width=2)
+line.delete(tld1R[1])
+
+tld1 = line.new(tom_start, hide_neg(tL_382), tom_end, hide_neg(tL_382), xloc.bar_time, color=color2, width=2)
+line.delete(tld1[1])
+tld2 = line.new(tom_start, hide_neg(tL_618), tom_end, hide_neg(tL_618), xloc.bar_time, color=color3, width=2)
+line.delete(tld2[1])
+tld3 = line.new(tom_start, hide_neg(tL_786), tom_end, hide_neg(tL_786), xloc.bar_time, color=color4, width=2)
+line.delete(tld3[1])
+tld4 = line.new(tom_start, hide_neg(tL1000), tom_end, hide_neg(tL1000), xloc.bar_time, color=color5, width=3)
+line.delete(tld4[1])
+
+tld5 = line.new(tom_start, hide_neg(tL1236), tom_end, hide_neg(tL1236), xloc.bar_time, color=color6, width=1)
+line.delete(sExt?tld5[1]:tld5)
+tld6 = line.new(tom_start, hide_neg(tL1382), tom_end, hide_neg(tL1382), xloc.bar_time, color=color7, width=1)
+line.delete(sExt?tld6[1]:tld6)
+tld7 = line.new(tom_start, hide_neg(tL1618), tom_end, hide_neg(tL1618), xloc.bar_time, color=color8, width=1)
+line.delete(sExt?tld7[1]:tld7)
+tld8 = line.new(tom_start, hide_neg(tL2000), tom_end, hide_neg(tL2000), xloc.bar_time, color=color9, width=2)
+line.delete(sExt?tld8[1]:tld8)
+
+
+tblue_box = box.new(tom_start, hide_neg(tH_236), tom_end, hide_neg(tL_236), xloc=xloc.bar_time, border_width=0, bgcolor=color.new(color.blue,92))
+box.delete(tblue_box[1])
